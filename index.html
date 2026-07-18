@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="一个轻量、离线可用的商品价格查询系统。"
+    />
+    <title>商品价格查询</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="storefront-page">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="返回商品查询首页">
+        <span class="brand-mark">价</span>
+        <span>
+          <strong>商品价格查询</strong>
+          <small>随时查价，清晰省心</small>
+        </span>
+      </a>
+      <a class="admin-link" href="admin.html">
+        <span aria-hidden="true">⚙</span> 后台管理
+      </a>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">PRICE LOOKUP</p>
+          <h1>快速找到商品与价格</h1>
+          <p>输入商品名称、分类或拼音关键字，立即查看最新售价。</p>
+        </div>
+        <div class="search-panel">
+          <label class="search-box" for="searchInput">
+            <span aria-hidden="true">⌕</span>
+            <input
+              id="searchInput"
+              type="search"
+              placeholder="例如：棉袜、保暖、mianwa..."
+              autocomplete="off"
+            />
+            <button id="clearSearch" type="button" aria-label="清空搜索">×</button>
+          </label>
+          <div id="popularKeywords" class="popular-keywords" aria-label="热门分类"></div>
+        </div>
+      </section>
+
+      <section class="catalog-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">商品目录</p>
+            <h2 id="resultTitle">全部商品</h2>
+          </div>
+          <p id="resultCount" class="result-count" aria-live="polite"></p>
+        </div>
+
+        <div id="statusMessage" class="status-message" role="status">
+          正在加载商品数据…
+        </div>
+        <div id="productGrid" class="product-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <template id="productCardTemplate">
+      <article class="product-card">
+        <div class="product-image">
+          <img alt="" hidden />
+          <span class="placeholder-icon" aria-hidden="true"></span>
+        </div>
+        <div class="product-content">
+          <div class="product-meta">
+            <span class="category-tag"></span>
+            <span class="product-id"></span>
+          </div>
+          <h3 class="product-name"></h3>
+          <p class="product-remark"></p>
+          <div class="product-footer">
+            <span class="price-label">售价</span>
+            <strong class="product-price"></strong>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <footer class="site-footer">
+      <span>商品价格查询系统</span>
+      <span>后台修改后，本页面会自动同步最新数据。</span>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="商品价格查询系统后台管理。" />
+    <title>后台管理｜商品价格查询</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="admin-page">
+    <header class="admin-header">
+      <div class="site-header">
+        <a class="brand" href="index.html" aria-label="返回商品查询首页">
+          <span class="brand-mark">价</span>
+          <span>
+            <strong>商品价格查询</strong>
+            <small>后台管理中心</small>
+          </span>
+        </a>
+        <a class="admin-link back-link" href="index.html">← 返回查询页</a>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <div class="admin-title-row">
+        <div>
+          <p class="eyebrow">ADMIN CENTER</p>
+          <h1>商品后台管理</h1>
+          <p>管理商品、价格、分类和商品图片。保存后，查询页会读取最新数据。</p>
+        </div>
+        <button id="addProductButton" class="button button-primary" type="button">
+          ＋ 新增商品
+        </button>
+      </div>
+
+      <div class="admin-layout">
+        <aside class="content-panel">
+          <div class="content-panel__header">
+            <h2>商品分类</h2>
+            <span id="categoryCount" class="category-tag"></span>
+          </div>
+          <div class="content-panel__body">
+            <div id="categoryList" class="category-list"></div>
+            <form id="addCategoryForm" class="add-category-form">
+              <input
+                id="newCategoryInput"
+                class="form-input"
+                type="text"
+                maxlength="20"
+                placeholder="输入新分类名称"
+                required
+              />
+              <button class="button button-secondary" type="submit">添加</button>
+            </form>
+          </div>
+        </aside>
+
+        <section class="content-panel">
+          <div class="content-panel__header">
+            <h2>商品列表</h2>
+            <span id="productCount" class="data-note"></span>
+          </div>
+          <div class="content-panel__body">
+            <div class="admin-toolbar">
+              <input
+                id="adminSearchInput"
+                class="form-input admin-search"
+                type="search"
+                placeholder="搜索名称、分类或拼音"
+              />
+              <div>
+                <button id="exportDataButton" class="button button-secondary" type="button">
+                  下载 JSON
+                </button>
+                <button id="resetDataButton" class="button button-danger" type="button">
+                  恢复初始测试数据
+                </button>
+              </div>
+            </div>
+            <p class="data-note">
+              数据保存在当前浏览器中；图片会以本地数据形式保存。建议定期导出或保留 data.json 备份。
+            </p>
+            <div class="table-wrap">
+              <table class="product-table">
+                <thead>
+                  <tr>
+                    <th>商品</th>
+                    <th>分类</th>
+                    <th>售价</th>
+                    <th>备注</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="productTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div id="productModal" class="modal-backdrop" hidden>
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-header">
+          <h2 id="modalTitle">新增商品</h2>
+          <button id="closeModalButton" class="icon-button" type="button" aria-label="关闭">×</button>
+        </div>
+        <form id="productForm">
+          <div class="modal-body">
+            <input id="productIdInput" type="hidden" />
+            <div class="form-grid">
+              <label class="form-field">
+                <span>商品名称<em>*</em></span>
+                <input id="productNameInput" class="form-input" type="text" maxlength="50" required />
+              </label>
+              <label class="form-field">
+                <span>商品分类<em>*</em></span>
+                <select id="productCategoryInput" class="form-select" required></select>
+              </label>
+              <label class="form-field">
+                <span>售价（元）<em>*</em></span>
+                <input
+                  id="productPriceInput"
+                  class="form-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputmode="decimal"
+                  required
+                />
+              </label>
+              <label class="form-field">
+                <span>拼音关键词</span>
+                <input
+                  id="productKeywordsInput"
+                  class="form-input"
+                  type="text"
+                  maxlength="100"
+                  placeholder="例如：mianswa mianwa"
+                />
+              </label>
+              <label class="form-field full-width">
+                <span>备注</span>
+                <textarea
+                  id="productRemarkInput"
+                  class="form-textarea"
+                  maxlength="200"
+                  placeholder="例如：颜色、尺寸、面料或库存提示"
+                ></textarea>
+              </label>
+              <div class="form-field full-width">
+                <span>商品图片</span>
+                <div class="image-upload">
+                  <div id="imagePreview" class="preview-image">
+                    <img id="imagePreviewImg" alt="商品图片预览" hidden />
+                    <span id="imagePreviewIcon" aria-hidden="true">🛍️</span>
+                  </div>
+                  <div class="upload-control">
+                    <input id="productImageInput" type="file" accept="image/*" />
+                    <button id="clearImageButton" class="button button-secondary" type="button">
+                      使用分类默认图标
+                    </button>
+                    <p class="upload-hint">建议选择小于 2MB 的 JPG、PNG、WebP 图片。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="cancelModalButton" class="button button-secondary" type="button">取消</button>
+            <button class="button button-primary" type="submit">保存商品</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="admin.js"></script>
+  </body>
+</html>

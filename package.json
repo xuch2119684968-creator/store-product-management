@@ -1,0 +1,29 @@
+{
+  "name": "store-product-management-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "线下实体店商品管理系统",
+  "scripts": {
+    "dev": "node scripts/dev-lan.mjs",
+    "build": "npm run build --prefix client && npm run build --prefix server",
+    "check:scripts": "npm run check:scripts --prefix server",
+    "start": "npm run start:cloud",
+    "start:cloud": "node server/dist/index.js",
+    "db:generate": "npm run prisma:generate --prefix server",
+    "db:migrate": "npm run prisma:migrate --prefix server",
+    "db:deploy": "npm run prisma:migrate --prefix server",
+    "db:seed": "npm run prisma:seed --prefix server",
+    "db:export-sqlite": "npm run db:export-sqlite --prefix server",
+    "db:migrate-from-sqlite": "npm run db:migrate-from-sqlite --prefix server",
+    "db:verify-migration": "npm run db:verify-migration --prefix server",
+    "storage:migrate-local-images": "npm run storage:migrate-local-images --prefix server",
+    "setup": "npm install && npm install --prefix server && npm install --prefix client && npm run db:generate && npm run db:migrate && npm run db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "prisma": "^6.19.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
+  }
+}

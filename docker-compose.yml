@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: store_product
+      POSTGRES_USER: store_user
+      POSTGRES_PASSWORD: change-this-local-password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U store_user -d store_product"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      SERVE_STATIC: "true"
+      PORT: 3001
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://store_user:change-this-local-password@postgres:5432/store_product?schema=public
+      FRONTEND_URL: http://localhost:3001
+      API_BASE_URL: http://localhost:3001
+      ALLOWED_ORIGINS: http://localhost:3001
+      JWT_SECRET: local-development-secret-change-before-production-2026-please
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  postgres_data:
