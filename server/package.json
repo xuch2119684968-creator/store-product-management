@@ -7,13 +7,13 @@
     "start": "node dist/index.js",
     "build": "tsc",
     "check:scripts": "tsc --project tsconfig.scripts.json",
-    "prisma:generate": "prisma generate --schema ../prisma/schema.prisma",
-    "prisma:migrate": "prisma migrate deploy --schema ../prisma/schema.prisma",
+    "prisma:generate": "node scripts/runPrisma.mjs generate",
+    "prisma:migrate": "node scripts/runPrisma.mjs migrate deploy",
     "prisma:seed": "tsx ../prisma/seed.ts",
-    "db:export-sqlite": "tsx scripts/exportSqlite.ts",
-    "db:migrate-from-sqlite": "tsx scripts/migrateSqliteToPostgres.ts",
-    "db:verify-migration": "tsx scripts/verifyPostgresMigration.ts",
-    "storage:migrate-local-images": "tsx scripts/migrateLocalImagesToR2.ts"
+    "db:export-sqlite": "node scripts/runTsx.mjs scripts/exportSqlite.ts",
+    "db:migrate-from-sqlite": "node scripts/runTsx.mjs scripts/migrateSqliteToPostgres.ts",
+    "db:verify-migration": "node scripts/runTsx.mjs scripts/verifyPostgresMigration.ts",
+    "storage:migrate-local-images": "node scripts/runTsx.mjs scripts/migrateLocalImagesToR2.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

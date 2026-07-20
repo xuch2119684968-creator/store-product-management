@@ -6,7 +6,14 @@ import { readSqliteSnapshot, snapshotSummary } from "./sqliteSnapshot";
 const prisma = new PrismaClient();
 const string = (value: unknown) => String(value ?? "");
 const nullable = (value: unknown) => value === null || value === undefined || value === "" ? null : String(value);
-const date = (value: unknown) => new Date(String(value));
+// Prisma SQLite 旧库把 DateTime 保存为 Unix 毫秒时间戳；导出的 JSON 中它是数字。
+// PostgreSQL 需要有效的 JavaScript Date，兼容数字、数字字符串和 ISO 文本三种形式。
+const date = (value: unknown) => {
+  const text = String(value ?? "").trim();
+  const parsed = /^\d{10,}$/.test(text) ? new Date(Number(text)) : new Date(text);
+  if (Number.isNaN(parsed.getTime())) throw new Error("SQLite 中存在无效时间字段：" + text);
+  return parsed;
+};
 const bool = (value: unknown) => value === true || value === 1 || value === "1";
 
 async function main() {
