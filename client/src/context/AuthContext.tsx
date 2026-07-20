@@ -23,7 +23,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then((result) => setUser(result.user))
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
-    const onUnauthorized = () => { void logout(); };
+    // 收到 401 只清除前端状态。若这里再请求 /auth/logout，退出接口本身的 401
+    // 会再次触发该事件，形成无限请求循环并误触发全局限流，进而阻断正常登录。
+    const onUnauthorized = () => { setUser(null); };
     window.addEventListener("store:unauthorized", onUnauthorized);
     return () => window.removeEventListener("store:unauthorized", onUnauthorized);
   }, []);

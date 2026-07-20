@@ -52,19 +52,30 @@ npm run storage:migrate-local-images
 
 ## 本地开发
 
-需要 Node.js 22+、PostgreSQL 16+。将 `.env.example` 复制为 `.env`，填写本地 PostgreSQL 连接串和随机 `JWT_SECRET`：
+需要 Node.js 22+。本项目会按 `DATABASE_URL` 自动选择本地开发模型：
+
+- 现有历史数据使用 `DATABASE_URL="file:./store.db"` 时，执行 `npm run dev` 会连接 `prisma/store.db`，不会重新初始化商品、分类、库存或设置数据；仅在旧库缺少首次改密标记时安全新增该字段。
+- 新的 PostgreSQL 开发环境使用 `postgresql://...` 时，会使用正式 PostgreSQL 模型。将 `.env.example` 复制为 `.env`，填写本地 PostgreSQL 连接串和随机 `JWT_SECRET`：
 
 ```bash
 cp .env.example .env
 npm install
 npm install --prefix server
 npm install --prefix client
-npm run db:generate
 npm run db:migrate
 npm run dev
 ```
 
 前端开发地址为 `http://localhost:5173`，API 健康检查为 `http://localhost:3001/api/health`。`client/vite.config.ts` 中的 localhost 代理仅用于开发，生产不运行 Vite。
+
+### 管理员密码恢复（仅本地 SQLite）
+
+管理员忘记密码时，先备份 `prisma/store.db`，然后使用下列命令只重置指定账号的密码，不会修改商品、分类、库存、供应商或系统设置。重置后的账号会被要求在登录后立即修改密码：
+
+```bash
+cd server
+node scripts/resetAdminPassword.mjs --username "你的管理员用户名" --password "临时高强度密码" --confirm
+```
 
 如安装 Docker Desktop，也可运行完整本地 PostgreSQL 环境：
 

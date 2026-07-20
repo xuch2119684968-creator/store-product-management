@@ -9,7 +9,8 @@ const router = Router();
 router.use(requireAuth);
 
 const date = z.string().datetime();
-const price = z.union([z.string(), z.number()]).transform((value) => String(value));
+// 使用 number 同时兼容本地 SQLite 的 REAL 与云端 PostgreSQL 的 DECIMAL。
+const price = z.coerce.number().finite("价格格式不正确。").min(0, "价格不能小于 0。");
 const backupSchema = z.object({
   format: z.literal("store-product-management-backup"),
   version: z.literal(2),

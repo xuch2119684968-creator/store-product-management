@@ -1,0 +1,115 @@
+// 本地兼容数据库模型：仅供开发环境继续使用既有 prisma/store.db。
+// 云端正式部署始终使用 schema.prisma（PostgreSQL）。
+generator client {
+  provider = "prisma-client-js"
+  output   = "../server/node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductStatus {
+  ON_SALE
+  OFF_SALE
+}
+
+enum InventoryOperation {
+  INBOUND
+  OUTBOUND
+  ADJUSTMENT
+  STOCKTAKE
+  IMPORT
+}
+
+model User {
+  id                 String            @id @default(cuid())
+  username           String            @unique
+  passwordHash       String
+  mustChangePassword Boolean           @default(true)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  inventoryRecords   InventoryRecord[] @relation("InventoryOperator")
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  icon      String    @default("Tag")
+  remark    String    @default("")
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+
+  @@index([sortOrder])
+}
+
+model Supplier {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  contact   String    @default("")
+  phone     String    @default("")
+  address   String    @default("")
+  remark    String    @default("")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+}
+
+model Product {
+  id             String        @id @default(cuid())
+  code           String        @unique
+  barcode        String?       @unique
+  name           String
+  categoryId     String
+  category       Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  imagePath      String?
+  specification  String        @default("")
+  color          String        @default("")
+  size           String        @default("")
+  purchasePrice  Float         @default(0)
+  retailPrice    Float         @default(0)
+  memberPrice    Float         @default(0)
+  stock          Int           @default(0)
+  lowStock       Int           @default(0)
+  supplierId     String?
+  supplier       Supplier?     @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  location       String        @default("")
+  remark         String        @default("")
+  status         ProductStatus @default(ON_SALE)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  inventoryLogs  InventoryRecord[]
+
+  @@index([name])
+  @@index([categoryId])
+  @@index([stock])
+  @@index([status])
+}
+
+model InventoryRecord {
+  id             String             @id @default(cuid())
+  productId      String
+  product        Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  operation      InventoryOperation
+  changeQuantity Int
+  beforeStock    Int
+  afterStock     Int
+  operatorId     String?
+  operator       User?              @relation("InventoryOperator", fields: [operatorId], references: [id], onDelete: SetNull)
+  remark         String             @default("")
+  createdAt      DateTime           @default(now())
+
+  @@index([productId, createdAt])
+  @@index([createdAt])
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

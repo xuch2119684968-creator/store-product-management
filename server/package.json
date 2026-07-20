@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "node scripts/prepareDevPrisma.mjs && tsx watch src/index.ts",
     "start": "node dist/index.js",
     "build": "tsc",
     "check:scripts": "tsc --project tsconfig.scripts.json",
