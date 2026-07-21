@@ -6,7 +6,9 @@ services:
     # 正式长期使用时改回 starter 并完成付款验证。
     plan: free
     region: oregon
-    buildCommand: npm ci && npm ci --prefix server && npm ci --prefix client && npm run db:generate && npm run build
+    # Render 在 NODE_ENV=production 下默认跳过 devDependencies，但 TypeScript、Vite、Prisma
+    # 均在构建阶段必需；显式安装开发依赖，运行时仍只启动编译后的产物。
+    buildCommand: npm ci --include=dev && npm ci --include=dev --prefix server && npm ci --include=dev --prefix client && npm run db:generate && npm run build
     startCommand: npm run db:deploy && npm run start:cloud
     healthCheckPath: /api/health
     autoDeployTrigger: commit
