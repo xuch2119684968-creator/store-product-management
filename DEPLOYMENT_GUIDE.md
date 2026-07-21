@@ -1,6 +1,8 @@
 # 云端部署操作清单
 
-本项目选择 Render + Neon + Cloudflare R2：Render 的付费 Starter Web Service 保持常驻并提供自动 TLS；Neon 保存 PostgreSQL；R2 保存商品图片。前端和 API 同一 Render URL，手机使用任何网络均只需打开这个 HTTPS URL。
+正式推荐架构为 Render Starter + Neon + Cloudflare R2：Starter Web Service 保持常驻并提供自动 TLS；Neon 保存 PostgreSQL；R2 保存商品图片。前端和 API 同一 Render URL，手机使用任何网络均只需打开这个 HTTPS URL。
+
+如果暂时无法在 Render 绑定付款方式，项目也支持 **Render Free + Neon + Cloudinary Free** 的免绑卡临时方案。它能提供同一公网 HTTPS 地址和持久化数据库/图片，但 Render Free 会在 15 分钟无请求后休眠，下一次打开可能等待约一分钟；不能把它当作店铺长期稳定正式服务。
 
 ## 0. 部署前检查
 
@@ -11,7 +13,7 @@
 - 迁移核对基线：商品 30、库存总数 608、分类 11、库存记录 9。
 - 本地 Git 已初始化；尚未创建提交或远程仓库。
 
-不要公开、截图或提交以下内容：Neon `DATABASE_URL`、`JWT_SECRET`、R2 Secret Access Key、`.env`、备份 JSON/SQLite。
+不要公开、截图或提交以下内容：Neon `DATABASE_URL`、`JWT_SECRET`、R2 Secret Access Key、Cloudinary `API_SECRET`、`.env`、备份 JSON/SQLite。
 
 ## 1. 创建 Neon PostgreSQL（需要你登录）
 
@@ -43,6 +45,15 @@ npm run db:verify-migration
 
 不要在浏览器直接上传到 R2；本系统由后端校验图片签名后上传，R2 密钥永远不会下发到手机浏览器。
 
+## 2B. 免绑卡图片存储：Cloudinary Free（R2 的替代）
+
+1. 打开 [Cloudinary](https://cloudinary.com/)，创建免费的 Image and Video API 账号。Cloudinary 公开说明其免费计划不要求信用卡。
+2. 进入 Dashboard，记录 **Cloud name**、**API Key** 与 **API Secret**；后两项属于敏感凭据，不要发到聊天或提交 GitHub。
+3. 在本地 `.env` 中填写 `CLOUDINARY_CLOUD_NAME`、`CLOUDINARY_API_KEY`、`CLOUDINARY_API_SECRET`。不要同时填写完整 R2 凭据；系统会优先使用 R2。
+4. 若历史 `uploads/` 存在图片，执行 `npm run storage:migrate-local-images`。迁移完成后才可手动清理旧本地图片。
+
+商品图片始终由后端校验格式和大小后进行签名上传，Cloudinary `API_SECRET` 不会发送到手机浏览器。
+
 ## 3. 创建 GitHub 私有仓库（需要你登录）
 
 1. 打开 [GitHub](https://github.com/new)，Repository name 填 `store-product-management`。
@@ -65,7 +76,7 @@ GitHub 可能要求你使用浏览器或 Personal Access Token 授权；这是�
 
 1. 打开 [Render Dashboard](https://dashboard.render.com/)，使用 GitHub 登录或在 **Account Settings → GitHub** 连接 GitHub。
 2. 点击 **New + → Blueprint**，选择刚创建的私有仓库和 `main` 分支。Render 会读取根目录 `render.yaml`。
-3. 服务名可填写 `store-product-management-你的昵称`。选择离你较近的区域；计划选择 **Starter**，不要使用 Free（Free 会闲置休眠，不适合店内实时查询）。
+3. 服务名可填写 `store-product-management-你的昵称`。选择离你较近的区域；正式使用计划选择 **Starter**。当前 `render.yaml` 为免绑卡备用的 **Free**，如已完成付款验证，请将其中的 `plan: free` 改回 `plan: starter` 后推送。
 4. 创建完成后，先记下 Render 分配的网址，例如 `https://store-product-management-xxx.onrender.com`。
 5. 打开该服务的 **Environment**，逐项填入：
 
@@ -80,6 +91,9 @@ GitHub 可能要求你使用浏览器或 Personal Access Token 授权；这是�
 | `R2_ACCESS_KEY_ID` | R2 Access Key ID。 |
 | `R2_SECRET_ACCESS_KEY` | R2 Secret Access Key。 |
 | `R2_PUBLIC_URL` | R2 的 `https://...r2.dev` 或已绑定的 `https://images.你的域名.com`。 |
+| `CLOUDINARY_CLOUD_NAME` | 仅使用 Cloudinary 时填写 Cloud name。 |
+| `CLOUDINARY_API_KEY` | 仅使用 Cloudinary 时填写 API Key。 |
+| `CLOUDINARY_API_SECRET` | 仅使用 Cloudinary 时填写 API Secret，严禁公开。 |
 | `JWT_SECRET` | Blueprint 自动生成；如需手动设置，用 `openssl rand -base64 48` 生成。 |
 
 不要修改 `NODE_ENV=production` 和 `PORT=10000`。保存后点击 **Manual Deploy → Deploy latest commit**。
@@ -100,7 +114,7 @@ GitHub 可能要求你使用浏览器或 Personal Access Token 授权；这是�
 - 查看服务日志：Render 服务页点击 **Logs**；日志只记录方法、路径、状态和耗时，不记录密码、Cookie、Token 或数据库连接串。
 - 健康检查：打开 `https://你的正式网址/api/health`，应返回 `status: ok` 与 `database: ok`。
 - 构建失败：先查看 Render **Events** 中第一条失败命令；本地运行 `npm run db:generate && npm run build`。数据库迁移失败时核对 `DATABASE_URL` 是否为 Neon Direct URL，确认目标库为空，再重新部署。
-- 图片上传失败：核对所有 `R2_*` 变量、R2 Token 是否仅限正确桶且有 Object Read & Write 权限、`R2_PUBLIC_URL` 是否为 HTTPS。
+- 图片上传失败：若使用 R2，核对所有 `R2_*` 变量、Token 范围与 `R2_PUBLIC_URL`；若使用 Cloudinary，核对三个 `CLOUDINARY_*` 服务端变量是否完整且来自同一 Product Environment。
 - CORS 403：核对 `FRONTEND_URL` 和 `ALLOWED_ORIGINS` 是否等于浏览器实际 HTTPS 地址（不带末尾 `/`）。
 
 ## 自有域名

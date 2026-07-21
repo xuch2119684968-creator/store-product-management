@@ -1,6 +1,6 @@
 # 商品管理系统（云端正式版）
 
-这是适合实体店个人管理的商品、库存、价格与价签系统。正式架构为单一 HTTPS Web 服务：React 前端由 Express 同域提供，Express API 使用 PostgreSQL 保存业务数据，商品图片保存到 Cloudflare R2。因此手机和电脑始终访问同一份实时数据，家里的电脑关闭不会影响使用。
+这是适合实体店个人管理的商品、库存、价格与价签系统。正式架构为单一 HTTPS Web 服务：React 前端由 Express 同域提供，Express API 使用 PostgreSQL 保存业务数据，商品图片保存到 Cloudflare R2 或 Cloudinary。因此手机和电脑始终访问同一份实时数据，家里的电脑关闭不会影响使用。
 
 ## 正式架构
 
@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 前端与 API | Render Web Service（单服务） | 自动 HTTPS、GitHub 自动部署、前端与 API 同域，避免跨域 Cookie 与 mixed content。 |
 | 数据库 | Neon PostgreSQL | 标准 PostgreSQL、独立于应用重部署、支持连接池和恢复能力。 |
-| 图片 | Cloudflare R2 | S3 兼容、对象持久化、重部署不会丢失图片。 |
+| 图片 | Cloudflare R2 或 Cloudinary | 两者均为持久化云对象存储；Cloudinary 免费计划可在未绑卡时使用。 |
 | ORM | Prisma | 迁移、类型安全和参数化查询。 |
 
 不使用浏览器 localStorage、JSON 或 SQLite 作为生产数据源。SQLite 只保留为本地历史数据迁移源。
@@ -20,7 +20,7 @@
 - 首次默认管理员登录后强制跳到系统设置修改密码。
 - Helmet、严格 CORS 白名单、登录每 15 分钟最多 5 次、API 每 15 分钟最多 300 次。
 - Zod 输入校验、Prisma 参数化查询、价格 `DECIMAL(12,2)`、库存整数和库存变动事务记录。
-- 图片仅限 JPG/JPEG、PNG、WebP，限制大小并校验文件签名；生产上传到 R2，删除商品时同步删除 R2 对象。
+- 图片仅限 JPG/JPEG、PNG、WebP，限制大小并校验文件签名；生产上传到 R2 或 Cloudinary，删除商品时同步删除云端对象。
 - 商品、分类、库存、查价、条形码、导入导出、价签和云端 JSON 逻辑备份/事务恢复。
 
 详细安全说明见 `SECURITY_REPORT.md`，云端操作见 `DEPLOYMENT_GUIDE.md`。
@@ -44,7 +44,7 @@ npm run db:migrate
 npm run db:migrate-from-sqlite
 npm run db:verify-migration
 
-# 若历史 uploads 中存在图片，设置 R2_* 环境变量后执行
+# 若历史 uploads 中存在图片，设置 R2_* 或 CLOUDINARY_* 环境变量后执行
 npm run storage:migrate-local-images
 ```
 
@@ -116,7 +116,8 @@ Render 使用 `render.yaml`：构建时安装三个 package 的依赖、生成 P
 | `API_BASE_URL` | 同域时填同一个 HTTPS 正式网址。 |
 | `ALLOWED_ORIGINS` | 逗号分隔的允许来源，至少包含正式前端 HTTPS 地址。 |
 | `JWT_SECRET` | 至少 32 位随机密钥，绝不提交 GitHub。 |
-| `R2_ENDPOINT`、`R2_BUCKET`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY`、`R2_PUBLIC_URL` | Cloudflare R2 的限定桶读写凭据与 HTTPS 图片公开地址。 |
+| `R2_ENDPOINT`、`R2_BUCKET`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY`、`R2_PUBLIC_URL` | Cloudflare R2 的限定桶读写凭据与 HTTPS 图片公开地址。与下方 Cloudinary 二选一。 |
+| `CLOUDINARY_CLOUD_NAME`、`CLOUDINARY_API_KEY`、`CLOUDINARY_API_SECRET` | Cloudinary 的服务端图片凭据。与 R2 二选一；`API_SECRET` 绝不提交或放入前端。 |
 
 `.env`、SQLite、备份、导出和 uploads 均被 `.gitignore` 排除，提交前可用 `git status --ignored` 再次确认。
 

@@ -41,11 +41,21 @@ const r2 = {
   publicUrl: (process.env.R2_PUBLIC_URL || "").replace(/\/+$/, "")
 };
 const r2Configured = Object.values(r2).every(Boolean);
-if (isProduction && !r2Configured) {
-  throw new Error("生产环境必须完整设置 R2_ENDPOINT、R2_BUCKET、R2_ACCESS_KEY_ID、R2_SECRET_ACCESS_KEY 和 R2_PUBLIC_URL。");
-}
 if (r2Configured && !r2.publicUrl.startsWith("https://")) {
   throw new Error("R2_PUBLIC_URL 必须为 HTTPS 公网地址。");
+}
+
+// Cloudinary 免费计划可作为没有 R2 账单账户时的持久化图片存储替代方案。
+// API Secret 仅保存在服务端环境变量，绝不下发到浏览器。
+const cloudinary = {
+  cloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
+  apiKey: process.env.CLOUDINARY_API_KEY || "",
+  apiSecret: process.env.CLOUDINARY_API_SECRET || ""
+};
+const cloudinaryConfigured = Object.values(cloudinary).every(Boolean);
+const imageStorageProvider = r2Configured ? "r2" : cloudinaryConfigured ? "cloudinary" : "local";
+if (isProduction && imageStorageProvider === "local") {
+  throw new Error("生产环境必须完整设置 R2_* 或 CLOUDINARY_CLOUD_NAME、CLOUDINARY_API_KEY、CLOUDINARY_API_SECRET 之一，不能把商品图片保存到临时磁盘。");
 }
 
 const lanIps = getLanIps();
@@ -85,5 +95,8 @@ export const config = {
   databaseFile: path.join(projectRoot, "prisma", "store.db"),
   backupsDir: path.join(projectRoot, "data", "backups"),
   r2,
-  r2Configured
+  r2Configured,
+  cloudinary,
+  cloudinaryConfigured,
+  imageStorageProvider
 };

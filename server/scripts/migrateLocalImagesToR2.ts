@@ -14,7 +14,7 @@ async function main() {
     console.log(JSON.stringify({ found: 0, migrated: 0, failures: [] }, null, 2));
     return;
   }
-  if (!config.r2Configured) throw new Error("检测到本地商品图片，请先完整设置 R2_* 环境变量后再迁移。");
+  if (config.imageStorageProvider === "local") throw new Error("检测到本地商品图片，请先完整设置 R2_* 或 CLOUDINARY_* 图片存储环境变量后再迁移。");
   const products = await prisma.product.findMany({ where: { imagePath: { startsWith: "/uploads/" } }, select: { id: true, imagePath: true } });
   let migrated = 0;
   const failures: string[] = [];
