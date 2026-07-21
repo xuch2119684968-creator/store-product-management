@@ -28,9 +28,15 @@ if (isProduction && !databaseUrl.startsWith("postgresql://")) {
   throw new Error("生产环境必须提供以 postgresql:// 开头的 DATABASE_URL。");
 }
 
-const frontendUrl = process.env.FRONTEND_URL || (isProduction ? "" : "http://localhost:5173");
+// Render 在运行期注入当前服务的真实 HTTPS 地址。服务名发生后缀变化时，
+// 不能只依赖手工填写的 FRONTEND_URL，否则会导致同源前端请求被 CORS 拒绝。
+const renderExternalUrl = (process.env.RENDER_EXTERNAL_URL || "").replace(/\/+$/, "");
+const frontendUrl = process.env.FRONTEND_URL || renderExternalUrl || (isProduction ? "" : "http://localhost:5173");
 if (isProduction && !frontendUrl.startsWith("https://")) {
   throw new Error("生产环境必须设置 HTTPS FRONTEND_URL。");
+}
+if (renderExternalUrl && !renderExternalUrl.startsWith("https://")) {
+  throw new Error("RENDER_EXTERNAL_URL 必须为 HTTPS 公网地址。");
 }
 
 const r2 = {
@@ -68,7 +74,7 @@ const localOrigins = [
 ];
 const configuredOrigins = parseOrigins(process.env.ALLOWED_ORIGINS);
 const allowedOrigins = new Set(isProduction
-  ? [frontendUrl, ...configuredOrigins]
+  ? [frontendUrl, renderExternalUrl, ...configuredOrigins].filter(Boolean)
   : [frontendUrl, ...localOrigins, ...configuredOrigins]);
 
 export const config = {
@@ -80,6 +86,7 @@ export const config = {
   host: process.env.HOST || "0.0.0.0",
   databaseUrl,
   frontendUrl,
+  renderExternalUrl,
   apiBaseUrl: process.env.API_BASE_URL || (isProduction ? frontendUrl : "http://localhost:3001"),
   allowedOrigins,
   lanIps,
