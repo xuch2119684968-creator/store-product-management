@@ -148,17 +148,40 @@ router.patch(
   "/:id",
   asyncHandler(async (req, res) => {
     const input = productSchema.parse(req.body);
-    const current = await prisma.product.findUnique({ where: { id: String(req.params.id) } });
-    if (!current) return res.status(404).json({ message: "商品不存在或已删除。" });
-    if (input.stock !== current.stock) {
-      return res.status(400).json({ message: "库存请通过“库存管理”页面调整，确保保留完整变动记录。" });
-    }
-    const product = await prisma.product.update({
-      where: { id: String(req.params.id) },
-      data: productData(input),
-      include: productInclude()
+    const productId = String(req.params.id);
+    const result = await prisma.$transaction(async (transaction) => {
+      await transaction.$queryRaw(
+        Prisma.sql`SELECT "id" FROM "Product" WHERE "id" = ${productId} FOR UPDATE`,
+      );
+      const current = await transaction.product.findUnique({ where: { id: productId } });
+      if (!current) return null;
+
+      const stockChanged = input.stock !== current.stock;
+      const product = await transaction.product.update({
+        where: { id: productId },
+        data: productData(input),
+        include: productInclude()
+      });
+      if (stockChanged) {
+        await transaction.inventoryRecord.create({
+          data: {
+            productId,
+            operation: "STOCKTAKE",
+            changeQuantity: input.stock - current.stock,
+            beforeStock: current.stock,
+            afterStock: input.stock,
+            operatorId: req.user!.id,
+            remark: "商品编辑修改库存"
+          }
+        });
+      }
+      return { product, stockChanged };
     });
-    res.json({ message: "商品信息已更新。", product: serializeForApi(product) });
+    if (!result) return res.status(404).json({ message: "商品不存在或已删除。" });
+    res.json({
+      message: result.stockChanged ? "商品信息和库存已更新，已生成库存记录。" : "商品信息已更新。",
+      product: serializeForApi(result.product)
+    });
   })
 );
 

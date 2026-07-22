@@ -668,16 +668,15 @@ export function ProductsPage() {
               </Field>
               <Field label="当前库存">
                 <input
-                  className="input disabled:bg-slate-100"
+                  className="input"
                   type="number"
                   min="0"
                   value={form.stock}
-                  disabled={Boolean(editing)}
                   onChange={(e) => change("stock", Number(e.target.value))}
                 />
                 <p className="mt-1 text-xs text-slate-400">
                   {editing
-                    ? "编辑商品时请通过库存管理调整库存。"
+                    ? "保存后将按盘点方式更新库存，并自动生成库存变动记录。"
                     : "新增商品将自动生成入库记录。"}
                 </p>
               </Field>
