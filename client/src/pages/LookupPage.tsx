@@ -155,15 +155,15 @@ export function LookupPage() {
             </div>
             <div className="mt-6 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4">
               <div>
-                <p className="text-xs text-slate-500">零售价</p>
-                <p className="mt-1 text-xl font-bold text-rose-600">
-                  {money(detail.retailPrice)}
+                <p className="text-xs text-slate-500">批发价</p>
+                <p className="mt-1 text-xl font-bold text-brand-600">
+                  {money(detail.wholesalePrice)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-slate-500">会员价</p>
-                <p className="mt-1 text-xl font-bold text-brand-600">
-                  {money(detail.memberPrice)}
+                <p className="text-xs text-slate-500">零售价</p>
+                <p className="mt-1 text-xl font-bold text-rose-600">
+                  {money(detail.retailPrice)}
                 </p>
               </div>
               <div>
