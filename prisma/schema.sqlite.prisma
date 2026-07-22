@@ -70,6 +70,7 @@ model Product {
   color          String        @default("")
   size           String        @default("")
   purchasePrice  Float         @default(0)
+  wholesalePrice Float         @default(0)
   retailPrice    Float         @default(0)
   memberPrice    Float         @default(0)
   stock          Int           @default(0)

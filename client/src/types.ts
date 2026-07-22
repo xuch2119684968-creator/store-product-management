@@ -31,6 +31,7 @@ export interface Product {
   color: string;
   size: string;
   purchasePrice: number;
+  wholesalePrice: number;
   retailPrice: number;
   memberPrice: number;
   stock: number;

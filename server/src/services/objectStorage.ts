@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { constants, createReadStream } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
@@ -73,6 +74,12 @@ async function uploadToCloudinary(file: Express.Multer.File) {
         resolve(result.secure_url);
       }
     );
+    if (file.path) {
+      const source = createReadStream(file.path);
+      source.once("error", reject);
+      source.pipe(stream);
+      return;
+    }
     stream.end(file.buffer);
   });
 }
@@ -83,7 +90,7 @@ export async function saveProductImage(file: Express.Multer.File) {
     await r2Client.send(new PutObjectCommand({
       Bucket: config.r2.bucket,
       Key: key,
-      Body: file.buffer,
+      Body: file.path ? createReadStream(file.path) : file.buffer,
       ContentType: file.mimetype,
       CacheControl: "public, max-age=31536000, immutable"
     }));
@@ -95,7 +102,9 @@ export async function saveProductImage(file: Express.Multer.File) {
   // 本地开发保留原有 uploads 行为；生产启动时会强制要求配置持久化图片存储。
   await fs.mkdir(config.uploadsDir, { recursive: true });
   const filename = path.basename(key);
-  await fs.writeFile(path.join(config.uploadsDir, filename), file.buffer, { flag: "wx" });
+  const destination = path.join(config.uploadsDir, filename);
+  if (file.path) await fs.copyFile(file.path, destination, constants.COPYFILE_EXCL);
+  else await fs.writeFile(destination, file.buffer, { flag: "wx" });
   return "/uploads/" + filename;
 }
 

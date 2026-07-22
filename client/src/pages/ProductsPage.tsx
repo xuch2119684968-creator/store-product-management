@@ -31,6 +31,7 @@ type ProductForm = {
   color: string;
   size: string;
   purchasePrice: number;
+  wholesalePrice: number;
   retailPrice: number;
   memberPrice: number;
   stock: number;
@@ -50,6 +51,7 @@ const blank = (categoryId = ""): ProductForm => ({
   color: "",
   size: "",
   purchasePrice: 0,
+  wholesalePrice: 0,
   retailPrice: 0,
   memberPrice: 0,
   stock: 0,
@@ -167,6 +169,7 @@ export function ProductsPage() {
       color: product.color,
       size: product.size,
       purchasePrice: product.purchasePrice,
+      wholesalePrice: product.wholesalePrice,
       retailPrice: product.retailPrice,
       memberPrice: product.memberPrice,
       stock: product.stock,
@@ -627,6 +630,18 @@ export function ProductsPage() {
                   }
                 />
               </Field>
+              <Field label="批发价">
+                <input
+                  className="input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.wholesalePrice}
+                  onChange={(e) =>
+                    change("wholesalePrice", Number(e.target.value))
+                  }
+                />
+              </Field>
               <Field label="零售价 *">
                 <input
                   className="input"
@@ -728,7 +743,7 @@ export function ProductsPage() {
                   <span className="text-xs text-slate-400">
                     {form.imagePath
                       ? "点击缩略图可放大查看"
-                      : "支持 JPG、PNG、WebP"}
+                      : "支持 JPG、PNG、WebP，单张最多 20MB"}
                   </span>
                 </div>
               </Field>

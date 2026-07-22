@@ -10,7 +10,7 @@ const router = Router();
 router.use(requireAuth);
 
 const columns = [
-  "商品编号", "条形码", "商品名称", "分类", "规格", "颜色", "尺码", "进货价", "零售价",
+  "商品编号", "条形码", "商品名称", "分类", "规格", "颜色", "尺码", "进货价", "批发价", "零售价",
   "会员价", "库存", "库存预警值", "供应商", "存放位置", "备注"
 ];
 
@@ -24,6 +24,7 @@ type ImportProduct = {
   color: string;
   size: string;
   purchasePrice: number;
+  wholesalePrice: number;
   retailPrice: number;
   memberPrice: number;
   stock: number;
@@ -53,6 +54,7 @@ function normalizeRows(rows: Record<string, unknown>[]) {
       color: text(raw["颜色"]),
       size: text(raw["尺码"]),
       purchasePrice: number(raw["进货价"]),
+      wholesalePrice: number(raw["批发价"]),
       retailPrice: number(raw["零售价"]),
       memberPrice: number(raw["会员价"]),
       stock: number(raw["库存"]),
@@ -65,7 +67,7 @@ function normalizeRows(rows: Record<string, unknown>[]) {
     if (!item.code) item.errors.push("商品编号不能为空");
     if (!item.name) item.errors.push("商品名称不能为空");
     if (!item.category) item.errors.push("分类不能为空");
-    if (![item.purchasePrice, item.retailPrice, item.memberPrice].every((value) => value >= 0)) {
+    if (![item.purchasePrice, item.wholesalePrice, item.retailPrice, item.memberPrice].every((value) => value >= 0)) {
       item.errors.push("价格必须是大于或等于 0 的数字");
     }
     if (![item.stock, item.lowStock].every((value) => Number.isInteger(value) && value >= 0)) {
@@ -128,6 +130,7 @@ router.post(
         color: text(raw.color),
         size: text(raw.size),
         purchasePrice: number(raw.purchasePrice),
+        wholesalePrice: number(raw.wholesalePrice),
         retailPrice: number(raw.retailPrice),
         memberPrice: number(raw.memberPrice),
         stock: number(raw.stock),
@@ -140,7 +143,7 @@ router.post(
       if (!item.code) item.errors.push("商品编号不能为空");
       if (!item.name) item.errors.push("商品名称不能为空");
       if (!item.category) item.errors.push("分类不能为空");
-      if (![item.purchasePrice, item.retailPrice, item.memberPrice].every((value) => value >= 0)) item.errors.push("价格必须是大于或等于 0 的数字");
+      if (![item.purchasePrice, item.wholesalePrice, item.retailPrice, item.memberPrice].every((value) => value >= 0)) item.errors.push("价格必须是大于或等于 0 的数字");
       if (![item.stock, item.lowStock].every((value) => Number.isInteger(value) && value >= 0)) item.errors.push("库存和库存预警值必须是大于或等于 0 的整数");
       return item;
     });
@@ -174,7 +177,7 @@ router.post(
         data: {
           code: item.code, barcode: item.barcode || null, name: item.name, categoryId: categoryId!,
           specification: item.specification, color: item.color, size: item.size,
-          purchasePrice: item.purchasePrice, retailPrice: item.retailPrice, memberPrice: item.memberPrice,
+          purchasePrice: item.purchasePrice, wholesalePrice: item.wholesalePrice, retailPrice: item.retailPrice, memberPrice: item.memberPrice,
           stock: item.stock, lowStock: item.lowStock, supplierId, location: item.location, remark: item.remark
         }
       });
@@ -203,7 +206,7 @@ router.get(
     });
     const rows = products.map((item) => ({
       "商品编号": item.code, "条形码": item.barcode || "", "商品名称": item.name, "分类": item.category.name,
-      "规格": item.specification, "颜色": item.color, "尺码": item.size, "进货价": Number(item.purchasePrice),
+      "规格": item.specification, "颜色": item.color, "尺码": item.size, "进货价": Number(item.purchasePrice), "批发价": Number(item.wholesalePrice),
       "零售价": Number(item.retailPrice), "会员价": Number(item.memberPrice), "库存": item.stock, "库存预警值": item.lowStock,
       "供应商": item.supplier?.name || "", "存放位置": item.location, "备注": item.remark,
       "商品状态": item.status === "ON_SALE" ? "在售" : "停售"

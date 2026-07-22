@@ -13,6 +13,7 @@ export const productSchema = z.object({
   color: z.string().trim().max(50).optional().or(z.literal("")),
   size: z.string().trim().max(50).optional().or(z.literal("")),
   purchasePrice: z.coerce.number().finite("进货价格式不正确。").min(0, "进货价不能小于 0。").max(1_000_000_000),
+  wholesalePrice: z.coerce.number().finite("批发价格式不正确。").min(0, "批发价不能小于 0。").max(1_000_000_000).default(0),
   retailPrice: z.coerce.number().finite("零售价格式不正确。").min(0, "零售价不能小于 0。").max(1_000_000_000),
   memberPrice: z.coerce.number().finite("会员价格式不正确。").min(0, "会员价不能小于 0。").max(1_000_000_000),
   stock: z.coerce.number().finite("库存格式不正确。").int().min(0, "库存不能小于 0。").max(1_000_000_000),

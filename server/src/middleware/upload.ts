@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+import fs from "node:fs";
 import path from "node:path";
 import type { NextFunction, Request, Response } from "express";
 import multer from "multer";
@@ -16,9 +18,21 @@ const importMimeTypes = new Set([
 ]);
 const backupExtensions = new Set([".json"]);
 const backupMimeTypes = new Set(["application/json", "text/json", "application/octet-stream"]);
+const imageTempRoot = path.resolve(config.imageTempDir);
+
+fs.mkdirSync(imageTempRoot, { recursive: true, mode: 0o700 });
+
+const imageDiskStorage = multer.diskStorage({
+  destination: (_req, _file, callback) => callback(null, imageTempRoot),
+  filename: (_req, file, callback) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+    callback(null, crypto.randomUUID() + extension);
+  }
+});
 
 export const imageUpload = multer({
-  storage: multer.memoryStorage(),
+  // 大图片落到临时磁盘后直接流式写入云端存储，避免 multer.memoryStorage 占满 Node 内存。
+  storage: imageDiskStorage,
   limits: { fileSize: config.uploadMaxBytes, files: 1 },
   fileFilter: (_req, file, callback) => {
     const extension = path.extname(file.originalname).toLowerCase();
@@ -67,11 +81,40 @@ function validImageContent(buffer: Buffer, mimeType: string) {
   return false;
 }
 
-/** 仅信任二进制签名，不信任浏览器报送的 MIME 类型。 */
-export function verifyUploadedImage(req: Request, res: Response, next: NextFunction) {
-  if (!req.file) return res.status(400).json({ message: "请选择要上传的图片。" });
-  if (!validImageContent(req.file.buffer, req.file.mimetype)) {
-    return res.status(400).json({ message: "图片内容与文件格式不匹配，已拒绝上传。" });
+function isManagedImageTempFile(file: Express.Multer.File) {
+  if (!file.path) return false;
+  const candidate = path.resolve(file.path);
+  return candidate.startsWith(imageTempRoot + path.sep);
+}
+
+export async function cleanupUploadedImage(file: Express.Multer.File | undefined) {
+  if (!file || !isManagedImageTempFile(file)) return;
+  await fs.promises.unlink(file.path).catch(() => undefined);
+}
+
+async function readImageHeader(file: Express.Multer.File) {
+  const header = Buffer.alloc(12);
+  const handle = await fs.promises.open(file.path, "r");
+  try {
+    const { bytesRead } = await handle.read(header, 0, header.length, 0);
+    return header.subarray(0, bytesRead);
+  } finally {
+    await handle.close();
   }
-  return next();
+}
+
+/** 仅信任二进制签名，不信任浏览器报送的 MIME 类型。 */
+export async function verifyUploadedImage(req: Request, res: Response, next: NextFunction) {
+  if (!req.file) return res.status(400).json({ message: "请选择要上传的图片。" });
+  try {
+    const header = await readImageHeader(req.file);
+    if (!validImageContent(header, req.file.mimetype)) {
+      await cleanupUploadedImage(req.file);
+      return res.status(400).json({ message: "图片内容与文件格式不匹配，已拒绝上传。" });
+    }
+    return next();
+  } catch {
+    await cleanupUploadedImage(req.file);
+    return res.status(400).json({ message: "图片读取失败，请重新选择后上传。" });
+  }
 }

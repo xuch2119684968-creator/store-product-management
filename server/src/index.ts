@@ -103,13 +103,17 @@ if (config.serveStatic && fs.existsSync(clientDist)) {
 }
 
 app.use((_req, res) => res.status(404).json({ message: "接口不存在。" }));
-app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+app.use((error: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (error instanceof ZodError) return res.status(400).json({ message: error.issues[0]?.message || "提交的数据格式不正确。" });
   if (error instanceof Error && /仅支持|图片内容|导入文件最多|备份文件/.test(error.message)) return res.status(400).json({ message: error.message });
   if (typeof error === "object" && error && "code" in error && (error as { code?: string }).code === "CORS_ORIGIN_DENIED") {
     return res.status(403).json({ message: "当前访问来源未被服务器允许。" });
   }
   if (typeof error === "object" && error && "code" in error && (error as { code?: string }).code === "LIMIT_FILE_SIZE") {
+    if (req.path === "/api/uploads/image") {
+      const maxMb = Math.round(config.uploadMaxBytes / 1024 / 1024);
+      return res.status(400).json({ message: "商品图片过大，单张最多可上传 " + maxMb + "MB。" });
+    }
     return res.status(400).json({ message: "上传文件超过系统允许的大小限制。" });
   }
   if (typeof error === "object" && error && "code" in error) {

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import { imageUpload, verifyUploadedImage } from "../middleware/upload";
+import { cleanupUploadedImage, imageUpload, verifyUploadedImage } from "../middleware/upload";
 import { saveProductImage } from "../services/objectStorage";
 
 const router = Router();
@@ -14,6 +14,8 @@ router.post("/image", imageUpload.single("image"), verifyUploadedImage, async (r
     return res.status(201).json({ message: "图片上传成功。", imagePath });
   } catch (error) {
     return next(error);
+  } finally {
+    await cleanupUploadedImage(image);
   }
 });
 

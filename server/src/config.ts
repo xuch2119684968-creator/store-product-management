@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import os from "node:os";
 import path from "node:path";
 import { z } from "zod";
 import { getLanIps } from "./utils/network";
@@ -16,6 +17,8 @@ const parseBytes = (value: string | undefined, fallbackMb: number) => {
   return Math.floor(parsed * 1024 * 1024);
 };
 const parseOrigins = (value: string | undefined) => (value || "").split(",").map((item) => item.trim()).filter(Boolean);
+// 即使旧环境变量仍为 5MB，也将商品图片的最低可上传上限提升为 20MB；管理员可设置更高值（最多 200MB）。
+const imageUploadMaxBytes = Math.max(parseBytes(process.env.UPLOAD_MAX_MB, 20), 20 * 1024 * 1024);
 
 const port = Number(process.env.PORT || 3001);
 if (!Number.isSafeInteger(port) || port < 1 || port > 65535) throw new Error("PORT 必须是 1 到 65535 之间的端口号。");
@@ -95,10 +98,12 @@ export const config = {
   jwtAudience: "store-product-management-client",
   authCookieName: "store_session",
   authCookieMaxAgeMs: 8 * 60 * 60 * 1000,
-  uploadMaxBytes: parseBytes(process.env.UPLOAD_MAX_MB, 5),
+  // 图片先写入临时磁盘并流式上传到对象存储，不会把完整大图保留在 Node 内存中。
+  uploadMaxBytes: imageUploadMaxBytes,
   importMaxBytes: parseBytes(process.env.IMPORT_MAX_MB, 10),
   backupMaxBytes: parseBytes(process.env.BACKUP_MAX_MB, 50),
   uploadsDir: path.join(projectRoot, "uploads"),
+  imageTempDir: path.join(os.tmpdir(), "store-product-image-upload"),
   databaseFile: path.join(projectRoot, "prisma", "store.db"),
   backupsDir: path.join(projectRoot, "data", "backups"),
   r2,

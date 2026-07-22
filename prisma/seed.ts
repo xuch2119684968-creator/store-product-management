@@ -90,6 +90,7 @@ async function main() {
         color,
         size,
         purchasePrice,
+        wholesalePrice: Math.round(retailPrice * 0.85 * 100) / 100,
         retailPrice,
         memberPrice,
         stock,
