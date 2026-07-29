@@ -17,6 +17,9 @@
     "db:migrate-from-sqlite": "npm run db:migrate-from-sqlite --prefix server",
     "db:verify-migration": "npm run db:verify-migration --prefix server",
     "storage:migrate-local-images": "npm run storage:migrate-local-images --prefix server",
+    "desktop:install": "npm install --prefix desktop",
+    "desktop:dev": "npm run dev --prefix desktop",
+    "desktop:package:mac": "npm run package:mac --prefix desktop",
     "setup": "npm install && npm install --prefix server && npm install --prefix client && npm run db:generate && npm run db:migrate && npm run db:seed"
   },
   "devDependencies": {

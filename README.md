@@ -131,3 +131,14 @@ Render 使用 `render.yaml`：构建时安装三个 package 的依赖、生成 P
 ## 部署与更新
 
 完整的逐步账号授权、Neon、R2、GitHub、Render、日志、域名和故障处理说明，请按 `DEPLOYMENT_GUIDE.md` 执行。部署成功后，后续只需推送到已连接分支，Render 会自动构建、迁移和部署。
+
+## Mac 桌面版
+
+桌面版是当前云端正式系统的 Mac 客户端：双击应用即可进入同一套 HTTPS 系统，商品、库存和手机端始终实时同步。它不会在本地保存商品数据库或密码。
+
+```bash
+npm run desktop:install
+npm run desktop:package:mac
+```
+
+安装包会生成在 `desktop/dist/`。把 `.dmg` 双击打开后，将“商品管理系统”拖入“应用程序”即可。未进行 Apple 开发者签名的本地安装包，首次打开时如被 macOS 拦截，可在“系统设置 → 隐私与安全性”中选择“仍要打开”。

@@ -1,0 +1,36 @@
+{
+  "name": "store-product-management-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "商品管理系统 Mac 桌面客户端",
+  "main": "main.cjs",
+  "scripts": {
+    "dev": "electron .",
+    "package:mac": "electron-builder --mac dmg"
+  },
+  "devDependencies": {
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.storeproductmanagement.desktop",
+    "productName": "商品管理系统",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "target": [
+        "dmg"
+      ]
+    },
+    "dmg": {
+      "title": "商品管理系统安装程序"
+    }
+  }
+}
